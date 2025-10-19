@@ -154,5 +154,5 @@ SIMPLE_JWT = {
 }
 
 # CORS (importante para frontend separado)
-INSTALLED_APPS += ['corsheaders']
+# INSTALLED_APPS += ['corsheaders']
 MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
