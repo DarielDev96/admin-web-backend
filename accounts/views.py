@@ -6,21 +6,32 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .serializers import RegistroSerializer, LoginSerializer, UsuarioSerializer
-from .models import Usuario
+from django.contrib.auth import get_user_model
+
+Usuario = get_user_model()
 
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def registro_view(request):
+    # Verificar si es el primer usuario
+    is_first_user = not Usuario.objects.exists()
+
     serializer = RegistroSerializer(data=request.data)
     if serializer.is_valid():
         usuario = serializer.save()
+
+        # Si es el primer usuario, hacerlo superusuario y staff
+        if is_first_user:
+            usuario.is_superuser = True
+            usuario.is_staff = True
+            usuario.save(update_fields=['is_superuser', 'is_staff'])
+
         return Response({
             'message': 'Usuario creado exitosamente',
             'user': UsuarioSerializer(usuario).data
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
