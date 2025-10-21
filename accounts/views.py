@@ -7,6 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .serializers import RegistroSerializer, LoginSerializer, UsuarioSerializer
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 Usuario = get_user_model()
 
@@ -57,4 +58,22 @@ def login_view(request):
 @permission_classes([IsAuthenticated])
 def me_view(request):
     serializer = UsuarioSerializer(request.user)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def listar_usuarios_view(request):
+    # Solo listar usuarios de las PYMEs donde el usuario tiene acceso
+    from tienda.models import PYME
+    pymes = PYME.objects.filter(
+        Q(propietario=request.user) |
+        Q(administrador=request.user)
+    )
+    usuarios = Usuario.objects.filter(
+        Q(pymes_propias__in=pymes) |
+        Q(pymes_administradas__in=pymes) |
+        Q(pymes_empleado__in=pymes)
+    ).distinct()
+    serializer = UsuarioSerializer(usuarios, many=True)
     return Response(serializer.data)
