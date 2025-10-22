@@ -40,8 +40,11 @@ class PYMECreateSerializer(serializers.ModelSerializer):
 class PYMESerializer(serializers.ModelSerializer):
     propietario = serializers.StringRelatedField()
     administrador = serializers.StringRelatedField()
+    administrador_id = serializers.IntegerField(
+        source='administrador.id', read_only=True)
     empleados = serializers.StringRelatedField(many=True)
-
+    empleados_ids = serializers.PrimaryKeyRelatedField(
+        many=True, read_only=True, source='empleados')
     class Meta:
         model = PYME
         fields = '__all__'
