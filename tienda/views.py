@@ -226,3 +226,21 @@ def listar_turnos_view(request):
 
     serializer = TurnoSerializer(turnos, many=True)
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def detalle_pyme_view(request, pyme_id):
+    try:
+        pyme = PYME.objects.get(id=pyme_id)
+        # Verificar acceso
+        if not (
+            pyme.propietario == request.user or
+            pyme.administrador == request.user or
+            pyme.empleados.filter(id=request.user.id).exists()
+        ):
+            return Response({'error': 'No tienes acceso a esta PYME'}, status=403)
+        serializer = PYMESerializer(pyme)
+        return Response(serializer.data)
+    except PYME.DoesNotExist:
+        return Response({'error': 'PYME no encontrada'}, status=404)
