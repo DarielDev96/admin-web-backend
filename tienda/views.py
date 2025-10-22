@@ -244,3 +244,21 @@ def detalle_pyme_view(request, pyme_id):
         return Response(serializer.data)
     except PYME.DoesNotExist:
         return Response({'error': 'PYME no encontrada'}, status=404)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def actualizar_pyme_view(request, pyme_id):
+    try:
+        pyme = PYME.objects.get(id=pyme_id)
+        if pyme.propietario != request.user:
+            return Response({'error': 'Solo el propietario puede editar la PYME'}, status=403)
+
+        serializer = PYMECreateSerializer(
+            pyme, data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(PYMESerializer(pyme).data)
+        return Response(serializer.errors, status=400)
+    except PYME.DoesNotExist:
+        return Response({'error': 'PYME no encontrada'}, status=404)

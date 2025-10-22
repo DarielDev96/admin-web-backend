@@ -8,6 +8,8 @@ urlpatterns = [
     path('pymes/', views.listar_pymes_view, name='listar_pymes'),
     path('pymes/crear/', views.crear_pyme_view, name='crear_pyme'),
     path('pymes/<int:pyme_id>/', views.detalle_pyme_view, name='detalle_pyme'),
+    path('pymes/<int:pyme_id>/actualizar/',
+         views.actualizar_pyme_view, name='actualizar_pyme'),
 
     # Productos
     path('productos/', views.listar_productos_view, name='listar_productos'),
