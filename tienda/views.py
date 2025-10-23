@@ -262,3 +262,40 @@ def actualizar_pyme_view(request, pyme_id):
         return Response(serializer.errors, status=400)
     except PYME.DoesNotExist:
         return Response({'error': 'PYME no encontrada'}, status=404)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def actualizar_producto_view(request, producto_id):
+    try:
+        producto = Producto.objects.get(id=producto_id)
+        pyme = producto.tienda
+
+        # Verificar permisos
+        if not (pyme.propietario == request.user or pyme.administrador == request.user):
+            return Response({'error': 'Solo el propietario o administrador puede editar productos'}, status=403)
+
+        serializer = ProductoSerializer(
+            producto, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)
+    except Producto.DoesNotExist:
+        return Response({'error': 'Producto no encontrado'}, status=404)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def eliminar_producto_view(request, producto_id):
+    try:
+        producto = Producto.objects.get(id=producto_id)
+        pyme = producto.tienda
+
+        if not (pyme.propietario == request.user or pyme.administrador == request.user):
+            return Response({'error': 'Solo el propietario o administrador puede eliminar productos'}, status=403)
+
+        producto.delete()
+        return Response(status=204)
+    except Producto.DoesNotExist:
+        return Response({'error': 'Producto no encontrado'}, status=404)
