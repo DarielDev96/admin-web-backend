@@ -53,12 +53,19 @@ class PYMESerializer(serializers.ModelSerializer):
 class ProductoSerializer(serializers.ModelSerializer):
     tienda_nombre = serializers.CharField(
         source='tienda.nombre', read_only=True)
+    # Añade permisos del usuario actual
+    puede_editar = serializers.SerializerMethodField()
 
     class Meta:
         model = Producto
         fields = '__all__'
-        read_only_fields = ['tienda_nombre']
 
+    def get_puede_editar(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            pyme = obj.tienda
+            return pyme.propietario == request.user or pyme.administrador == request.user
+        return False
 
 class DetalleVentaSerializer(serializers.ModelSerializer):
     producto_nombre = serializers.CharField(
