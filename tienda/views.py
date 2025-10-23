@@ -43,8 +43,12 @@ def listar_productos_view(request):
         Q(empleados=request.user)
     ).values_list('id', flat=True)
 
-    productos = Producto.objects.filter(tienda_id__in=pymes_ids)
-    serializer = ProductoSerializer(productos, many=True)
+    productos = Producto.objects.filter(
+        tienda_id__in=pymes_ids)
+
+
+    serializer = ProductoSerializer(
+        productos, many=True, context={'request': request})
     return Response(serializer.data)
 
 
