@@ -210,24 +210,26 @@ def cerrar_turno_view(request, turno_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def listar_turnos_view(request):
-    """
-    Lista todos los turnos en los que el usuario tiene algún rol:
-    - Como propietario o administrador de la PYME (puede ver todos los turnos de esa PYME)
-    - Como empleado asignado (solo ve sus propios turnos)
-    """
-    # Turnos donde el usuario es empleado
-    turnos_como_empleado = Turno.objects.filter(empleados=request.user)
-
-    # Turnos de PYMEs donde es propietario o administrador
-    pymes_gestionadas = PYME.objects.filter(
+    pymes_con_acceso = PYME.objects.filter(
         Q(propietario=request.user) | Q(administrador=request.user)
     )
-    turnos_como_gestor = Turno.objects.filter(pyme__in=pymes_gestionadas)
+    turnos_propietario_admin = Turno.objects.filter(pyme__in=pymes_con_acceso)
 
-    # Combinar y ordenar
-    turnos = (turnos_como_empleado |
-              turnos_como_gestor).distinct().order_by('-inicio')
+    turnos_empleado = Turno.objects.filter(empleados=request.user)
 
+    # Filtros opcionales
+    pyme_id = request.GET.get('pyme')
+    if pyme_id:
+        turnos_propietario_admin = turnos_propietario_admin.filter(
+            pyme_id=pyme_id)
+        turnos_empleado = turnos_empleado.filter(pyme_id=pyme_id)
+
+    if request.GET.get('activo') == 'true':
+        turnos_propietario_admin = turnos_propietario_admin.filter(activo=True)
+        turnos_empleado = turnos_empleado.filter(activo=True)
+
+    turnos = (turnos_propietario_admin |
+              turnos_empleado).distinct().order_by('-inicio')
     serializer = TurnoSerializer(turnos, many=True)
     return Response(serializer.data)
 
@@ -303,3 +305,5 @@ def eliminar_producto_view(request, producto_id):
         return Response(status=204)
     except Producto.DoesNotExist:
         return Response({'error': 'Producto no encontrado'}, status=404)
+
+
